@@ -59,8 +59,16 @@
 ; Ejercicio 4
 
 ; Ejercicio 5
+; Función recursiva para clasificar números como Positivo, Negativo o Cero
+(define (clasificar-num lst)
+  (if (null? lst)
+      '()
+      (cons (cond [(> (car lst) 0) "Positivo"]
+                  [(< (car lst) 0) "Negativo"]
+                  [else "Cero"])
+            (clasificar-num (cdr lst)))))
 
-  
+; Ejercicio 6
 ;;simulador-dado : number -> (listof number)
 ;; version en la que el número n está dentro del rango [1-6] y la lista se detiene cuando la simulacion cae en n
 (define (simulador-dado n)
@@ -74,7 +82,12 @@
   (if (>= dado n)
       (list dado)
       (cons dado (simulador-dado-tarea (- n dado)))))
-              
+
+; Ejercicio 7
+
+;Ejercicio 8
+
+; Ejercicio 9
 ;; generate-brackets : number -> (listof string)
 (define (generate-brackets n)
   (generate-brackets-helper n n "")) ;
@@ -92,6 +105,7 @@
           (generate-brackets-helper izq (- der 1) (string-append str ")")) ;
           '()))]))
 
+; Ejercicio 10 
 ;; contar-pasos-uno : number -> number
 (define (contar-pasos-uno n)
   (define x 0)
