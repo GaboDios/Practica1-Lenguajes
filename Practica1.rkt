@@ -3,6 +3,7 @@
 ;; LENGUAJES DE PROGRAMACION 2025-2
 ;; PRACTICA 1
 ;; León García Gael Arturo   321333927
+:: Diaz Payne Gabriel        317097560
 
 
 
