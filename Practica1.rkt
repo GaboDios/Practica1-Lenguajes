@@ -4,6 +4,7 @@
 ;; PRACTICA 1
 ;; León García Gael Arturo   321333927
 :: Diaz Payne Gabriel        317097560
+;; Rojas Gutiérrez Ivana Fernanda 319095555
 
 
 
