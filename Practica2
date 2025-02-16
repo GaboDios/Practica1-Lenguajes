@@ -1,0 +1,29 @@
+#lang racket
+
+(struct carta (color valor) #:transparent)
+
+(struct juego (mazo en-juego manos turno) #:transparent )
+                        
+(define (generar-mazo)
+  (shuffle
+   (append
+     (for*/list ([color '(rojo azul verde amarillo)] [valor (range 0 10)])
+        (carta color valor))
+     (for*/list ([color '(rojo azul verde amarillo)] [valor '( skip reverse draw-2 )])
+        (carta color valor ))
+     (for*/list ([valor '(wild draw-4)] [i (range 4)])
+        ( carta 'especial valor )))))
+         
+(define (distribuir-cartas mazo num-jugadores)
+  (define mazo-individual
+    (for/list ([i (range num-jugadores)])  
+      (take (drop mazo (* i 7)) 7))) 
+  (define mazo-restante (drop mazo (* num-jugadores 7)))
+  (values mazo-restante mazo-individual))
+
+(define (crear-juego num-jugadores)
+  (define mazo-inicial (generar-mazo))
+  (define-values (mazo-restante mazo-individual)  (distribuir-cartas (cdr mazo-inicial) num-jugadores))
+  (juego mazo-restante (car mazo-inicial) mazo-individual 0))
+    
+  
