@@ -36,7 +36,7 @@
                [nuevas-manos (list-set (juego-manos juego) indice-jugador nueva-mano)]
                [nuevo-turno (modulo (+ (juego-turno juego) 1) (length (juego-manos juego)))])
           (juego (juego-mazo juego) carta nuevas-manos nuevo-turno))
-        (error "La carta no se puede jugar"))))
+        (error "La carta no es valida"))))
 
     
   
