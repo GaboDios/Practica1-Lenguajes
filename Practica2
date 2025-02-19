@@ -25,5 +25,18 @@
   (define mazo-inicial (generar-mazo))
   (define-values (mazo-restante mazo-individual)  (distribuir-cartas (cdr mazo-inicial) num-jugadores))
   (juego mazo-restante (car mazo-inicial) mazo-individual 0))
+
+(define (jugar-carta juego indice-jugador carta)
+  (let* ([mano (list-ref (juego-manos juego) indice-jugador)]
+         [carta-en-juego (juego-en-juego juego)])
+    (if (or (equal? (carta-color carta) (carta-color carta-en-juego))
+            (equal? (carta-valor carta) (carta-valor carta-en-juego))
+            (equal? (carta-color carta) 'especial))
+        (let* ([nueva-mano (remove carta mano)]
+               [nuevas-manos (list-set (juego-manos juego) indice-jugador nueva-mano)]
+               [nuevo-turno (modulo (+ (juego-turno juego) 1) (length (juego-manos juego)))])
+          (juego (juego-mazo juego) carta nuevas-manos nuevo-turno))
+        (error "La carta no se puede jugar"))))
+
     
   
