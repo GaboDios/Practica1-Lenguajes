@@ -1,55 +1,9 @@
 #lang racket
 
-;; Funciones de orden superior y funciones anónimas.
-
-(define (my-map f lst)
-     (match lst
-     [   '() lst]
-     [(cons x xs) (cons (f x) (my-map f xs))]))
-
-(define (my-foldr f v lst)
-    (match lst
-        [  '() v ]
-        [(cons x xs) (f x (my-foldr f v xs ))]))
-
-(define (my-foldl f v lst)
-   (match lst
-      [ '() v ]
-      [(cons x xs ) (my-foldl f (f x v) xs)]))
-
-;;  1. Una funcion que recibe una lista de numeros enteros lst y devuelve una lista
-;;  de la representacion binaria de los numeros de lst
-
-(define (binario-number n)
-	(if (= n 0)
-	'()
-	(append (binario-number(quotient n 2)) (list (remainder n 2)))))
-
-(define (a-binario lst)
-   (my-map binario-number lst))
-
-;; 2. Una funci ́on que recibe una lista de n ́umeros enteros lst y regresa una lista
-;; con los numeros que son palindromos en lst.
-(define (reverse-number n rev)
-   (if (= n 0)
-    rev
-    (reverse-number (quotient n 10) (+ (* rev 10) (remainder n 10)))))
-
-(define (palindromo? n)
-    (= n (reverse-number n 0)))
-
-(define(filter-palindromos lst)
-  (filter palindromo? lst))
-
-
 (struct carta (color valor) #:transparent)
 
-;; 3. Define una estructura llamada juego que represente el estado del juego con
-;; los campos:
-
 (struct juego (mazo en-juego manos turno) #:transparent )
-
-;; 4. Define un constructor crear-juego que inicialice el juego:
+                        
 (define (generar-mazo)
   (shuffle
    (append
@@ -72,8 +26,6 @@
   (define-values (mazo-restante mazo-individual)  (distribuir-cartas (cdr mazo-inicial) num-jugadores))
   (juego mazo-restante (car mazo-inicial) mazo-individual 0))
 
-;; 5. Define una funcion jugar-carta que permita a un jugador jugar una carta
-;; si es valida:
 (define (jugar-carta juego indice-jugador carta)
   (let* ([mano (list-ref (juego-manos juego) indice-jugador)]
          [carta-en-juego (juego-en-juego juego)])
@@ -86,18 +38,12 @@
           (juego (juego-mazo juego) carta nuevas-manos nuevo-turno))
         (error "La carta no es valida"))))
 
-;; 6. Una funcion que recibe una lista de n ́umeros lst enteros y devuelve un
-;; numero entero que es la concatenacion de los elementos de la lista.
-
-(define (concat-numero lst)
-     (my-foldl(lambda(x enum) (+ x (* enum 10))) 0 lst))
-
-;; 7. Define una funcion verificar-ganador que determine si un jugador se
-;; quedo sin cartas en su mano.
 (define (verificar-ganador manos [i 0])
   (cond
     [(empty? manos) #f]
     [(empty? (car manos)) i]
     [else (verificar-ganador (cdr manos) (add1 i))]))
 
+
+    
   

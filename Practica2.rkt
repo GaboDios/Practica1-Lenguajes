@@ -1,5 +1,11 @@
 #lang racket
 
+;; LENGUAJES DE PROGRAMACION 2025-2
+;; PRACTICA 2
+;; León García Gael Arturo   321333927
+;; Diaz Payne Gabriel        317097560
+;; Rojas Gutiérrez Ivana Fernanda 319095555
+
 ;; Funciones de orden superior y funciones anónimas.
 
 (define (my-map f lst)
