@@ -38,5 +38,12 @@
           (juego (juego-mazo juego) carta nuevas-manos nuevo-turno))
         (error "La carta no es valida"))))
 
+(define (verificar-ganador manos [i 0])
+  (cond
+    [(empty? manos) #f]
+    [(empty? (car manos)) i]
+    [else (verificar-ganador (cdr manos) (add1 i))]))
+
+
     
   
