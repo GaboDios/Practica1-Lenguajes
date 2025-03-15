@@ -55,10 +55,10 @@
     [id (i) (error "Variable libre")]
     [num (n) expr]
     [op (f args)
-     (let ([eval-args (map interp args)])  ;; Evaluar los argumentos
-       (num (apply f (map num-n eval-args))))]  ;; Aplicar la función f a los argumentos
+     (let ([eval-args (map interp args)])
+       (num (apply f (map num-n eval-args))))] 
     [with (bindings body)
-     (interp (aplicar-bindings bindings body))]  ;; Evaluar el cuerpo en el ámbito de los bindings
+     (interp (aplicar-bindings bindings body))]
     [with* (bindings body)
      (interp (aplicar-bindings* bindings body))]))
 ;;Funciones Auxiliares
@@ -96,7 +96,7 @@
     [(list? sexp)
      (case (first sexp)
        [(add1 sub1 + - * / = modulo expt)
-        (op (case (first sexp)  ;; Mapear el símbolo a la función correspondiente
+        (op (case (first sexp)
              [(+) +]
              [(-) -]
              [(*) *]
