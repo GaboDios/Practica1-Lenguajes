@@ -1,17 +1,73 @@
 #lang plai
 
-;; Definición de tipos
+;; Def del tipo Binding
 (define-type Binding
   [binding (id symbol?) (value FWAE?)])
 
+;; Def del tipo FWAE
 (define-type FWAE
-  [num (n number?)]
   [id (i symbol?)]
-  [op (f symbol?) (args (listof FWAE?))]
-  [with (bindings (listof Binding?)) (body FWAE?)]
-  [with* (bindings (listof Binding?)) (body FWAE?)]
-  [fun (params (listof symbol?)) (body FWAE?)]
-  [app (fn FWAE?) (args (listof FWAE?))])
+  [num (n number?)]
+  [op (f procedure?)(args (listof FWAE?))]
+  [with (bindings (listof binding?)) (body FWAE?)]
+  [with* (bindings (listof binding?)) ( body FWAE?)])
+
+;; subst : FWAE symbol FWAE - > FWAE
+(define (subst expr sub-id value)
+  (cond
+    [(id? expr)
+     (if (equal? (id-i expr) sub-id)
+            value
+            expr)]
+    [(num? expr) expr]
+    [(op? expr) (op (op-f expr) (map (lambda (arg) (subst arg sub-id value)) (op-args expr)))]
+    [(with? expr)
+     (with (map (lambda (b)
+                  (binding (binding-id b)  .
+                           (subst (binding-value b) sub-id value)))
+            (with-bindings expr))
+           (if (member sub-id (map binding-id (with-bindings expr)))
+               (with-body expr)
+               (subst (with-body expr) sub-id value)))]
+    [(with*? expr)
+     (with* (let loop ([bindings (with*-bindings expr)] [acc '()])
+             (if (null? bindings)
+                 (reverse acc)
+                 (let* ([b (car bindings)]
+                        [new-binding (binding (binding-id b)
+                                              (subst (binding-value b) sub-id value))])
+                   (loop (cdr bindings) (cons new-binding acc)))))
+            (if (member sub-id (map binding-id (with*-bindings expr)))
+                (with*-body expr)  
+                (subst (with*-body expr) sub-id value)))]
+  ))
+
+
+;;Evaluador de expresiones FWAE
+(define (interp expr)
+  (type-case FWAE expr
+    [id (i) (error "Variable libre")]
+    [num (n) expr]
+    [op (f args)
+     (let ([eval-args (map interp args)])  ;; Evaluar los argumentos
+       (num (apply f (map num-n eval-args))))]  ;; Aplicar la función f a los argumentos
+    [with (bindings body)
+     (interp (aplicar-bindings bindings body))]  ;; Evaluar el cuerpo en el ámbito de los bindings
+    [with* (bindings body)
+     (interp (aplicar-bindings* bindings body))]))
+;;Funciones Auxiliares
+(define (aplicar-bindings bindings body)
+  (if (null? bindings)
+      body
+      (aplicar-bindings (cdr bindings) 
+                        (subst body (binding-id (car bindings)) 
+                                     (binding-value (car bindings))))))
+(define (aplicar-bindings* bindings body)
+  (if (null? bindings)
+      body
+      (aplicar-bindings* (cdr bindings) 
+                         (subst body (binding-id (car bindings)) 
+                                      (interp (binding-value (car bindings)))))))
 
 ;; Función auxiliar para parsear un binding
 (define (parse-binding b)
@@ -34,7 +90,17 @@
     [(list? sexp)
      (case (first sexp)
        [(add1 sub1 + - * / = modulo expt)
-        (op (first sexp) (map parse (rest sexp)))]
+        (op (case (first sexp)  ;; Mapear el símbolo a la función correspondiente
+             [(+) +]
+             [(-) -]
+             [(*) *]
+             [(/) /]
+             [(modulo) modulo]
+             [(expt) expt]
+             [(add1) add1]
+             [(sub1) sub1]
+             [else (error 'parse "Operador desconocido")])
+          (map parse (rest sexp)))]
        
        ;; Caso with
        [(with)
@@ -50,15 +116,6 @@
                    (parse (third sexp)))
             (error 'parse "Syntax Error: Expresión mal formada en with*"))]
        
-       ;; Caso fun
-       [(fun)
-        (if (and (= (length sexp) 3) (list? (second sexp)) (andmap symbol? (second sexp)))
-            (fun (second sexp) 
-                 (parse (third sexp)))
-            (error 'parse "Syntax Error: Sintaxis inválida de fun"))]
-       
-       ;; Aplicación de función
-       [else (app (parse (first sexp)) 
-                  (map parse (rest sexp)))])]
+       )]
     
     [else (error 'parse "Syntax Error: Expresión inválida: ~a" sexp)]))
