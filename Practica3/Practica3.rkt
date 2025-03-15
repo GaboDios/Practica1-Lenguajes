@@ -1,5 +1,11 @@
 #lang plai
 
+;; LENGUAJES DE PROGRAMACION 2025-2
+;; PRACTICA 3
+;; León García Gael Arturo   321333927
+;; Diaz Payne Gabriel        317097560
+;; Rojas Gutiérrez Ivana Fernanda 319095555
+
 ;; Def del tipo Binding
 (define-type Binding
   [binding (id symbol?) (value FWAE?)])
