@@ -7,7 +7,13 @@
 ;; o informando un error si no lo encuentra.
 ;; lookup: symbol DefrdSub -> CFWAE
 ;; (define (lookup name ds)
-
+(define (lookup name ds)
+  (type-case DefrdSub ds
+    [mtSub () (error 'lookup (string-append "Variable no encontrada: " (symbol->string name)))]
+    [aSub (n v rest)
+          (if (equal? name n)
+              v
+              (lookup name rest))]))
 
 ;; Toma un árbol de sintáxis abstraca del lenguaje CFWAE, un caché de
 ;; sustituciones y lo interpreta dependiendo de las definiciones dentro del caché,
