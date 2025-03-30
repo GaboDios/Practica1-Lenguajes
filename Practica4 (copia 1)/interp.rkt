@@ -8,13 +8,6 @@
 ;; lookup: symbol DefrdSub -> CFWAE
 ;; (define (lookup name ds)
 
-(define (lookup name ds)
-  (type-case DefrdSub ds
-    [mtSub () (error "Variable libre: " name)]
-    [aSub (id val rest-ds)
-          (if (symbol=? name id)
-              val
-              (lookup name rest-ds))]))
 
 ;; Toma un árbol de sintáxis abstraca del lenguaje CFWAE, un caché de
 ;; sustituciones y lo interpreta dependiendo de las definiciones dentro del caché,
