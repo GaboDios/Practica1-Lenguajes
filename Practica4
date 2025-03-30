@@ -15,12 +15,26 @@
   [id (i symbol?)]
   [num (n number?)]
   [op (f procedure?)(args (listof CFWAE?))]
-  [with* (bindings (listof binding?)) ( body CFWAE?)]
+  [with* (bindings (listof binding?)) (body CFWAE?)]
   [if0 (condicion CFWAE?) (then CFWAE?) (else CFWAE?)]
   [fun (params (listof symbol?)) (body CFWAE?)]
   [app (fun CFWAE?) (args (listof CFWAE?))])
 
-;; parse : s-expression - > CFWAE
+;; Definición del caché de sustitución (DefrdSub)
+(define-type DefrdSub
+  [mtSub]  ;; Caché vacío
+  [aSub (name symbol?) (value CFWAE?) (ds DefrdSub?)])
+
+;; Función lookup para buscar un identificador en el caché de sustitución
+(define (lookup name ds)
+  (type-case DefrdSub ds
+    [mtSub () (error 'lookup (string-append "Variable no encontrada: " (symbol->string name)))]
+    [aSub (n v rest)
+          (if (equal? name n)
+              v
+              (lookup name rest))]))
+
+;; parse : s-expression -> CFWAE
 (define (parse sexp)
   (cond
     [(number? sexp) (num sexp)]
@@ -29,39 +43,39 @@
      (case (first sexp)
        [(add1 sub1 + - * / = modulo expt)
         (op (case (first sexp)
-             [(+) +]
-             [(-) -]
-             [(*) *]
-             [(/) /]
-             [(modulo) modulo]
-             [(expt) expt]
-             [(add1) add1]
-             [(sub1) sub1]
+             [(+) +] [(-) -] [(*) *] [(/) /]
+             [(modulo) modulo] [(expt) expt]
+             [(add1) add1] [(sub1) sub1]
              [else (error 'parse "Operador desconocido")])
           (map parse (rest sexp)))]
+
        [(with*)
         (if (and (>= (length sexp) 3) (list? (second sexp)))
             (with* (parse-bindings (second sexp))
                    (parse (third sexp)))
             (error 'parse "Syntax Error: Expresión mal formada en with*"))]
+
        [(if0)
         (if (= (length sexp) 4)
             (if0 (parse (second sexp))
                  (parse (third sexp))
                  (parse (fourth sexp)))
             (error 'parse "Syntax Error: Expresión mal formada en if0"))]
+
        [(fun)
         (if (and (= (length sexp) 3) 
                  (list? (second sexp)) 
                  (andmap symbol? (second sexp))) 
             (fun (second sexp) (parse (third sexp)))
             (error 'parse "Syntax Error: Expresión mal formada en fun"))]
+
        [else 
         (if (list? (first sexp))
             (app (parse (first sexp)) (map parse (rest sexp)))
             (error 'parse "Syntax Error: Expresión mal formada en aplicación de función"))])]
 
     [else (error 'parse "Syntax Error: Expresión inválida")]))
+
 
 ;; Función auxiliar para parsear un binding
 (define (parse-binding b)
