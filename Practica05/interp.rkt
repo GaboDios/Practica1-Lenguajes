@@ -3,6 +3,12 @@
 ;;(require (file "./parser.rkt"))
 (require (file "./desugar.rkt"))
 
+;; LENGUAJES DE PROGRAMACION 2025-2
+;; PRACTICA 3
+;; León García Gael Arturo   321333927
+;; Diaz Payne Gabriel        317097560
+;; Rojas Gutiérrez Ivana Fernanda 319095555
+
 ;; Busca el identificador "name" en el caché de 
 ;; sustitución "ds" regresando el valor correspondiente
 ;; o informando un error si no lo encuentra.
