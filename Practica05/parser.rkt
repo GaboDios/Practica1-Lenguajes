@@ -1,6 +1,13 @@
 #lang plai
 (require (file "./grammars.rkt"))
 
+;; LENGUAJES DE PROGRAMACION 2025-2
+;; PRACTICA 3
+;; León García Gael Arturo   321333927
+;; Diaz Payne Gabriel        317097560
+;; Rojas Gutiérrez Ivana Fernanda 319095555
+
+
 ;; Toma una lista de números, símbolos o listas
 ;; y la traduce a un árbol de sintaxis abstracta CFWBAE
 ;; A::=<number>
