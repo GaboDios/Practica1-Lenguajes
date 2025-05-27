@@ -1,0 +1,266 @@
+#lang plai
+;(require (file "./grammars.rkt"))
+;(require (file "./parser.rkt"))
+
+;; Toma un Árbol de sintaxis abstracta CFWBAE y obtiene el tipo
+;; de la expresión mínima.
+;; typeof CFWBAE -> Type-Context -> CFWBAE
+;; (define (typeof expr context)
+
+
+;; Funciones auxiliares
+(define (same-type? t1 t2) (equal? t1 t2))
+
+(define (all-same-type? type-list)
+  (if (null? type-list)
+      #true
+      (let ([t0 (first type-list)])
+        (check-all-same-type t0 (rest type-list)))))
+
+(define (check-all-same-type t ts)
+  (cond
+    [(null? ts) #true]
+    [(equal? t (first ts)) (check-all-same-type t (rest ts))]
+    [else #false]))
+
+(define (check-all-are type lst context)
+  (cond
+    [(null? lst) #true]
+    [(equal? (typeof (first lst) context) type)
+     (check-all-are type (rest lst) context)]
+    [else (error 'typeof "Tipo inesperado en argumentos")]))
+
+
+;; typeof : CFWBAE -> Type-Context -> Type
+(define (typeof expr context)
+  (match expr
+    ;; Identificadores
+    [(idS i) (lookup-type i context)]
+
+    ;; Números
+    [(numS _) numberT]
+
+    ;; Booleanos
+    [(boolS _) booleanT]
+
+    ;; Caracteres
+    [(charS _) charT]
+
+    ;; Strings
+    [(stringS _) stringT]
+
+    ;; Listas
+    [(listS l)
+     (if (null? l)
+         (error 'typeof "No se puede inferir el tipo de una lista vacía")
+         (let ([first-type (typeof (first l) context)]
+               [rest-types (map (lambda (e) (typeof e context)) (rest l))])
+           (if (check-all-same-type first-type rest-types)
+               (listT first-type)
+               (error 'typeof "Elementos de la lista tienen tipos distintos"))))]
+
+    ;; If0
+    [(iF0 cond then-expr else-expr)
+     (let ([cond-type (typeof cond context)]
+           [then-type (typeof then-expr context)]
+           [else-type (typeof else-expr context)])
+       (if (equal? cond-type numberT)
+           (if (equal? then-type else-type)
+               then-type
+               (error 'typeof "Ramas de if0 deben tener el mismo tipo"))
+           (error 'typeof "Condición de if0 debe ser numberT")))]
+
+    ;; If booleano
+    [(iFS cond then-expr else-expr)
+     (let ([cond-type (typeof cond context)]
+           [then-type (typeof then-expr context)]
+           [else-type (typeof else-expr context)])
+       (if (equal? cond-type booleanT)
+           (if (equal? then-type else-type)
+               then-type
+               (error 'typeof "Ramas de if deben tener el mismo tipo"))
+           (error 'typeof "Condición de if debe ser booleanT")))]
+
+    ;; Condicional múltiple
+    [(condS cases)
+     (let ([types (get-cond-branch-types cases context)])
+       (if (all-same-type? types)
+           (first types)
+           (error 'typeof "Ramas de cond deben tener el mismo tipo")))]
+
+    ;; Operaciones
+    [(opS f args)
+     (typeof-op f args context)]
+
+    ;; With
+    [(withS bindings body)
+     (typeof-with bindings body context)]
+
+    ;; With*
+    [(withS* bindings body)
+     (typeof-with* bindings body context)]
+
+    ;; Funciones
+    [(funS params return-type body)
+     (typeof-fun params return-type body context)]
+
+    ;; Aplicaciones
+    [(appS f args)
+     (typeof-app f args context)]))
+
+;; Función auxiliar para condS
+(define (get-cond-branch-types cases context)
+  (cond
+    [(null? cases) '()]
+    [else
+     (match (first cases)
+       [(condition test then-expr)
+        (let ([test-type (typeof test context)])
+          (if (equal? test-type booleanT)
+              (cons (typeof then-expr context)
+                    (get-cond-branch-types (rest cases) context))
+              (error 'typeof "Condición en cond debe ser booleanT")))]
+       [(else-cond expr)
+        (cons (typeof expr context)
+              (get-cond-branch-types (rest cases) context))])]))
+
+;; Función auxiliar para typeof-op
+(define (typeof-op f args context)
+  (cond
+    ;; Operadores numéricos
+    [(member f '(+ - * / = modulo expt add1 sub1 < <= > >= zero?))
+     (if (check-all-are numberT args context)
+         (if (member f '(= < <= > >=))
+             booleanT
+             numberT)
+         (error 'typeof "Argumentos de operación deben ser numberT"))]
+
+    ;; Operadores booleanos
+    [(member f '(and or not))
+     (if (check-all-are booleanT args context)
+         booleanT
+         (error 'typeof "Argumentos de operación lógica deben ser booleanT"))]
+
+    ;; Predicados de tipo
+    [(member f '(num? bool? char? string? list?))
+     booleanT]
+
+    ;; Operaciones sobre listas
+    [(equal? f 'empty?) booleanT]
+    [(equal? f 'length)
+     (if (equal? (typeof (first args) context) (listT 'dummy)) ;; permitimos cualquier lista
+         numberT
+         (error 'typeof "length espera una lista"))]
+    [(equal? f 'car)
+     (let ([t (typeof (first args) context)])
+       (match t
+         [(listT elem-type) elem-type]
+         [_ (error 'typeof "car espera una lista")]))]
+    [(equal? f 'cdr)
+     (let ([t (typeof (first args) context)])
+       (match t
+         [(listT elem-type) (listT elem-type)]
+         [_ (error 'typeof "cdr espera una lista")]))]
+    [(equal? f 'cons)
+     (let ([t1 (typeof (first args) context)]
+           [t2 (typeof (second args) context)])
+       (if (and (listT? t2) (equal? t1 (listT-elem-type t2)))
+           t2
+           (error 'typeof "cons: tipo de elemento no coincide con lista")))]
+    [(equal? f 'append)
+     (let ([t1 (typeof (first args) context)]
+           [t2 (typeof (second args) context)])
+       (if (and (listT? t1) (listT? t2)
+                (equal? (listT-elem-type t1) (listT-elem-type t2)))
+           t1
+           (error 'typeof "append espera listas del mismo tipo")))]
+
+    ;; Strings
+    [(equal? f 'string-append)
+     (if (check-all-are stringT args context)
+         stringT
+         (error 'typeof "string-append espera argumentos stringT"))]
+    [(equal? f 'string-length)
+     (if (equal? (typeof (first args) context) stringT)
+         numberT
+         (error 'typeof "string-length espera stringT"))]
+
+    ;; Error por operador desconocido
+    [else (error 'typeof "Operador no reconocido")]))
+
+;; Función auxiliar para typeof-with
+(define (typeof-with bindings body context)
+  (if (null? bindings)
+      (typeof body context)
+      (let* ([b (first bindings)]
+             [id (bindingS-id b)]
+             [val (bindingS-value b)]
+             [declared-type (bindingS-type b)]
+             [actual-type (typeof val context)])
+        (if (equal? declared-type actual-type)
+            (typeof-with (rest bindings) body (gamma id declared-type context))
+            (error 'typeof "Tipo declarado no coincide con valor en with")))))
+
+;; Función auxiliar para typeof-with*
+(define (typeof-with* bindings body context)
+  (if (null? bindings)
+      (typeof body context)
+      (let* ([b (first bindings)]
+             [id (bindingS-id b)]
+             [val (bindingS-value b)]
+             [declared-type (bindingS-type b)]
+             [actual-type (typeof val context)])
+        (if (equal? declared-type actual-type)
+            (typeof-with* (rest bindings) body (gamma id declared-type context))
+            (error 'typeof "Tipo declarado no coincide en with*")))))
+
+;; Función auxiliar para typeof-fun
+(define (typeof-fun params return-type body context)
+  (define new-context
+    (add-params-to-context params context))
+  (let ([body-type (typeof body new-context)])
+    (if (equal? body-type return-type)
+        (funT (get-param-types params) return-type)
+        (error 'typeof "Tipo del cuerpo de función no coincide con tipo declarado"))))
+
+(define (add-params-to-context params ctx)
+  (if (null? params)
+      ctx
+      (let ([p (first params)])
+        (add-params-to-context (rest params)
+                               (gamma (param-param p) (param-tipo p) ctx)))))
+
+(define (get-param-types params)
+  (if (null? params)
+      '()
+      (cons (param-tipo (first params))
+            (get-param-types (rest params)))))
+
+;; Función auxiliar para typeof-app
+(define (typeof-app f args context)
+  (let ([fun-type (typeof f context)]
+        [arg-types (get-arg-types args context)])
+    (match fun-type
+      [(funT param-types return-type)
+       (if (and (= (length param-types) (length arg-types))
+                (params-match? param-types arg-types))
+           return-type
+           (error 'typeof "Tipos de argumentos no coinciden con la función"))]
+      [_ (error 'typeof "Se esperaba una función")])))
+
+(define (get-arg-types args context)
+  (if (null? args)
+      '()
+      (cons (typeof (first args) context)
+            (get-arg-types (rest args) context))))
+
+(define (params-match? expected actual)
+  (if (null? expected)
+      (null? actual)
+      (and (equal? (first expected) (first actual))
+           (params-match? (rest expected) (rest actual)))))
+
+
+
+
+

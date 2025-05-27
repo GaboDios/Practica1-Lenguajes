@@ -1,0 +1,79 @@
+#lang plai
+;;Data-type que define al tipo de dato Type
+(define-type Type
+  [numberT]
+  [booleanT]
+  [charT]
+  [stringT]
+  [funT (params (listof Type?))])
+
+;; Definición del tipo Type-Context
+(define-type Type-Context
+  [phi]
+  [gamma (id symbol?)  (tipo Type?) (rest Type-Context?)])
+
+;; Definición del tipo Param
+(define-type Param
+  [param (param symbol?) (tipo Type?)])
+
+;; Definición del tipo Binding
+(define-type BindingS
+  [bindingS (id symbol?) (type Type?) (value SRCFWBAE-Typed?)])
+
+;; Definición del tipo Binding
+(define-type Binding
+  [binding (id symbol?) (value RCFWBAE-Typed?)])
+
+;;Definición del tipo condition para la definición de cond.
+(define-type Condition
+  [condition (test-expr SRCFWBAE-Typed?) (then-expr SRCFWBAE-Typed?)]
+  [else-cond (else-expr SRCFWBAE-Typed?)])
+
+;; Definición del tipo SRCFWBAE-TypedL
+(define-type SRCFWBAE-Typed
+  [idS     (i symbol?)]
+  [numS    (n number?)]
+  [boolS   (b boolean?)]
+  [charS   (c char?)]
+  [stringS (s string?)]
+  [listS   (l list?)]
+  [iF0     (condicion SRCFWBAE-Typed?) (then SRCFWBAE-Typed?) (else SRCFWBAE-Typed?)]
+  [iFS     (condicion SRCFWBAE-Typed?) (then SRCFWBAE-Typed?) (else SRCFWBAE-Typed?)]
+  [opS     (f procedure?) (args (listof SRCFWBAE-Typed?))]
+  [condS   (cases (listof Condition?))]
+  [withS   (bindings (listof bindingS?)) (body SRCFWBAE-Typed?)]
+  [withS*  (bindings (listof bindingS?)) (body SRCFWBAE-Typed?)]
+  [funS    (params (listof param?)) (rType Type?) (body SRCFWBAE-Typed?)]
+  [appS    (fun SRCFWBAE-Typed?) (args (listof SRCFWBAE-Typed?))])
+
+
+;; Gramáticas de la práctica anterior. Esto lo utilizarás sólo si
+;; quieres ganar los puntos extra. Puedes eliminarlo, en otro caso.
+;; Definición del tipo RCFWBAE-TypedL
+(define-type RCFWBAE-Typed
+  [id     (i symbol?)]
+  [num    (n number?)]
+  [bool   (b boolean?)]
+  [chaR   (c char?)]
+  [strinG (s string?)]
+  [lisT   (l list?)]
+  [iF     (condicion RCFWBAE-Typed?) (then RCFWBAE-Typed?) (else RCFWBAE-Typed?)]
+  [op     (f procedure?) (args (listof RCFWBAE-Typed?))]
+  [fun    (params (listof param?)) (body RCFWBAE-Typed?)]
+  [app    (fun RCFWBAE-Typed?) (args (listof RCFWBAE-Typed?))])
+
+
+;; Data-type que representa un ambiente de evaluación con cajas
+(define-type Env
+  [mtSub]
+  [aSub    (name symbol?) (value RCFWBAE-Value?) (rest-env Env?)])
+
+;;Data-type que representa la sintaxis abstracta de RCFWBAE-Typed-Value
+(define-type RCFWBAE-Value
+  [closure  (param (listof symbol?)) (body RCFWBAE-Typed?) (env Env?)]
+  [numV     (n number?)]
+  [boolV    (b boolean?)]
+  [charV    (c char?)]
+  [stringV  (s string?)]
+  [listV    (l list?)])
+
