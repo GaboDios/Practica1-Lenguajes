@@ -31,7 +31,7 @@
              (map parse (rest sexp))])]
 
        ;; if
-       ['if
+       [(if)
         (if (= (length sexp) 4)
             (iFS (parse (second sexp))
                  (parse (third sexp))
@@ -39,7 +39,7 @@
             (error 'parse "Syntax Error: Expresión if mal formada"))]
 
        ;; if0
-       ['if0
+       [(if0)
         (if (= (length sexp) 4)
             (iF0 (parse (second sexp))
                  (parse (third sexp))
@@ -53,12 +53,12 @@
             (error 'parse "Syntax Error: cond debe terminar con else"))]
 
        ;; with
-       ['with
+       [(with)
         (withS (parse-bindings (second sexp))
                (parse (third sexp)))]
 
        ;; with*
-       ['with*
+       [(with*)
         (withS* (parse-bindings (second sexp))
                 (parse (third sexp)))]
 
@@ -76,7 +76,7 @@
        [else
         (appS (parse (first sexp))
               (map parse (rest sexp)))]))
-   ;; [else (error 'parse "Syntax Error: Expresión inválida")]
+    [else (error 'parse "Syntax Error: Expresión inválida")]
 
 
 ;; parse-cond: s-expression -> Condition

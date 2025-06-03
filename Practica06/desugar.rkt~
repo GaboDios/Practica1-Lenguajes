@@ -40,22 +40,21 @@
 ;; sintáxis abstracta correspondiente a la expresión recibida.
 ;; desugar SCFWBAE-> CFWBAE
 (define (desugar sexpr)
-  (type-case SRCFWBAE-Typed sexpr
+  (type-case SCFWBAE sexpr
     [numS (n) (num n)]
     [boolS (b) (bool b)]
     [idS (i) (id i)]
 
     ;; Nuevos casos
-    [charS (c) (chaR c)]
+    [charS (c) (char c)]
     [stringS (s) (string s)]
     [listS (l) (list* (map desugar l))]
-    [iF0 (cond then else)
-     (iF (desugar cond) (desugar then) (desugar else))]  
+
     [iFS (condicion then else)
          (iF (desugar condicion) (desugar then) (desugar else))]
     [opS (f args)
          (op f (map desugar args))]
-    [funS (params rType body)
+    [funS (params body)
          (fun params (desugar body))]
     [appS (fun args)
          (app (desugar fun) (map desugar args))]
