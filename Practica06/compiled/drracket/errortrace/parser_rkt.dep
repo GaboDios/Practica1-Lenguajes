@@ -1,0 +1,1 @@
+("8.16" ta6le ("4e5e7f2712a80f228b5634709afd9ead24232a62" . "7e789498009414d6493a72e27db3ee59ad3a6382") #"/home/grauler/Documentos/Practica1-Lenguajes/Practica06/./grammars.rkt" (collects #"drracket" #"private" #"drracket-errortrace-key.rkt") (collects #"plai" #"lang" #"reader.rkt") (collects #"plai" #"main.rkt") (collects #"racket" #"runtime-config.rkt"))
