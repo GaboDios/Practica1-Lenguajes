@@ -1,0 +1,95 @@
+#lang plai
+(require (file "./grammars.rkt"))
+;;(require (file "./parser.rkt"))
+(require (file "./desugar.rkt"))
+
+;; LENGUAJES DE PROGRAMACION 2025-2
+;; PRACTICA 3
+;; León García Gael Arturo   321333927
+;; Diaz Payne Gabriel        317097560
+;; Rojas Gutiérrez Ivana Fernanda 319095555
+
+;; Busca el identificador "name" en el caché de 
+;; sustitución "ds" regresando el valor correspondiente
+;; o informando un error si no lo encuentra.
+;; lookup: symbol DefrdSub -> CFWBAE-Value
+;; (define (lookup name ds)
+
+(define (lookup name ds)
+  (type-case DefrdSub ds
+    [mtSub () (error 'lookup (format "Variable libre: ~a" name))]
+    [aSub (n v rest)
+          (if (symbol=? n name)
+              v
+              (lookup name rest))]))
+
+;; Toma un árbol de sintáxis abstraca del lenguaje CFWAE, un caché de
+;; sustituciones y lo interpreta dependiendo de las definiciones dentro del caché,
+;; devolviendo el valor numérico correspondiente.
+;; interp: CFWBAE DefrdSub-> CFWBAE-Value
+(define (interp expr ds)
+  (type-case CFWBAE expr
+    [id (i) (lookup i ds)]
+    [num (n) (numV n)]
+    [bool (b) (boolV b)]
+    
+    [iF (cond-expr then-expr else-expr)
+     (type-case CFWBAE-Value (interp cond-expr ds)
+       [boolV (b) (if b 
+                      (interp then-expr ds) 
+                      (interp else-expr ds))]
+       [else (error "interp: La condición debe ser booleana")])]
+    
+    [op (f args)
+     (let ([arg-values (map (λ (a) (interp a ds)) args)])
+       (apply-op f arg-values))]
+    
+    [fun (params body) (closure params body ds)]
+    
+    [app (fun-expr arg-exprs)
+     (type-case CFWBAE-Value (interp fun-expr ds)
+       [closure (params body env)
+        (if (= (length params) (length arg-exprs))
+            (interp body 
+                   (extend-ds params 
+                             (map (λ (a) (interp a ds)) arg-exprs)
+                             env))
+            (error "interp: Aridad incorrecta"))]
+       [else (error "interp: Intento de llamar a no-función")])]))
+;; Para extender el ambiente con parámetros->valores ya evaluados
+
+(define (extend-ds params arg-vals ds)
+  (if (null? params)
+      ds
+      (aSub (car params)
+            (car arg-vals)
+            (extend-ds (cdr params) (cdr arg-vals) ds))))
+
+(define (apply-op op arg-values)
+  (cond
+    [(member op (list + - * / modulo expt add1 sub1))
+     (if (andmap numV? arg-values)
+         (numV (apply op (map numV-n arg-values)))
+         (error "interp: Argumentos no numéricos para operación aritmética"))]
+    
+    [(member op (list < <= = >= >))
+     (if (andmap numV? arg-values)
+         (boolV (apply op (map numV-n arg-values)))
+         (error "interp: Argumentos no numéricos para comparación"))]
+    
+    [(member op '(and or))
+     (if (andmap boolV? arg-values)
+         (boolV (apply op (map boolV-b arg-values)))
+         (error "interp: Argumentos no booleanos para operación lógica"))]
+    
+    [(equal? op not)
+     (if (and (= (length arg-values) 1) (boolV? (car arg-values)))
+         (boolV (not (boolV-b (car arg-values))))
+         (error "interp: Argumento inválido para not"))]
+    
+    [(equal? op zero?)
+     (if (and (= (length arg-values) 1) (numV? (car arg-values)))
+         (boolV (zero? (numV-n (car arg-values))))
+         (error "interp: Argumento inválido para zero?"))]
+    
+    [else (error "interp: Operador desconocido")]))
